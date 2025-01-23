@@ -1,0 +1,9 @@
+package wasmcloud:filer;
+
+world filer {
+   import wasi:logging/logging@0.1.0-draft;
+   import wasi:blobstore/blobstore@0.2.0-draft;
+   import wasmcloud:messaging/consumer@0.2.0;
+
+   export wasi:http/incoming-handler@0.2.2;
+}

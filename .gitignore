@@ -1,0 +1,11 @@
+# Temp folder for components
+/storage
+
+# Bruno workspace :)
+/wc-hello-bruno
+
+# Rust files
+target
+
+# Wash files
+build
