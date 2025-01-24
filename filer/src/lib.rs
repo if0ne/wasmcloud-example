@@ -1,11 +1,11 @@
+wit_bindgen::generate!({ generate_all });
+
+use wasmcloud::example::fs_storage::store;
 use wasmcloud_component::{
     error,
     http::{self, ErrorCode},
     info,
-    wasi::blobstore::{
-        blobstore::{container_exists, create_container, get_container},
-        types::OutgoingValue,
-    }, wasmcloud::messaging::{consumer, types::BrokerMessage},
+    wasmcloud::messaging::{consumer, types::BrokerMessage},
 };
 
 struct Component;
@@ -49,49 +49,18 @@ impl http::Server for Component {
 
         info!("Extract next data: {data}");
 
-        let container = if container_exists(&"Default".to_string()).unwrap() {
-            info!("Container already exists, fetching ...");
-            get_container(&"Default".to_string()).map_err(|e| {
-                ErrorCode::InternalError(Some(format!("failed to get container {e:?}")))
-            })?
-        } else {
-            info!("Container did not exist, creating ...");
-            create_container(&"Default".to_string()).map_err(|e| {
-                ErrorCode::InternalError(Some(format!("failed to create container {e:?}")))
-            })?
-        };
-
-        let result_value = OutgoingValue::new_outgoing_value();
-
-        {
-            let stream = result_value
-                .outgoing_value_write_body()
-                .expect("failed to get outgoing value output stream");
-
-            if let Err(e) = container.write_data(&"test.txt".to_string(), &result_value) {
-                let error_msg = format!("Failed to write data to blobstore: {}", e);
-                error!("{}", error_msg);
-
-                return http::Response::builder()
-                    .status(500)
-                    .body(error_msg.into())
-                    .map_err(|e| {
-                        ErrorCode::InternalError(Some(format!("failed to build response {e:?}")))
-                    });
-            }
-
-            stream
-                .blocking_write_and_flush(data.as_bytes())
+        if let Err(e) = store("./projects/wc-hello/storage/Default/test.txt", data.as_bytes()) {
+            return http::Response::builder()
+                .status(500)
+                .body(format!("Got error while save {e}"))
                 .map_err(|e| {
-                    ErrorCode::InternalError(Some(format!("failed to write to file {e:?}")))
-                })?;
+                    ErrorCode::InternalError(Some(format!("failed to build response {e:?}")))
+                });
         }
-
-        OutgoingValue::finish(result_value).expect("failed to write data");
 
         if let Err(e) = consumer::publish(&BrokerMessage {
             subject: "hello.event".to_string(),
-            body: b"Default/test.txt".to_vec(),
+            body: b"./projects/wc-hello/storage/Default/test.txt".to_vec(),
             reply_to: None,
         }) {
             error!("Got error while sending throught nats {}", e);

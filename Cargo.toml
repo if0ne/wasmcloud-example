@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "filer",
+    "listener",
+    "storage-provider"
+]

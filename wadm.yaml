@@ -19,15 +19,10 @@ spec:
         - type: link
           properties:
             target:
-              name: blobstore-fs
-              config:
-                - name: root-directory
-                  properties:
-                    root: '../storage'
-                    
-            namespace: wasi
-            package: blobstore
-            interfaces: [blobstore]
+              name: fs-provider
+            namespace: wasmcloud
+            package: example
+            interfaces: [fs-storage]
 
         - type: link
           properties:
@@ -49,15 +44,10 @@ spec:
         - type: link
           properties:
             target:
-              name: blobstore-fs
-              config:
-                - name: root-directory
-                  properties:
-                    root: '../storage'
-                    
-            namespace: wasi
-            package: blobstore
-            interfaces: [blobstore]
+              name: fs-provider
+            namespace: wasmcloud
+            package: example
+            interfaces: [fs-storage]
 
         - type: link
           properties:
@@ -85,11 +75,6 @@ spec:
                   properties:
                     address: 0.0.0.0:8000
 
-    - name: blobstore-fs
-      type: capability
-      properties:
-        image: ghcr.io/wasmcloud/blobstore-fs:0.10.2
-
     - name: nats
       type: capability
       properties:
@@ -107,3 +92,8 @@ spec:
                 - name: simple-subscription
                   properties:
                     subscriptions: hello.event
+
+    - name: fs-provider
+      type: capability
+      properties:
+        image: file://storage-provider/build/fs-storage-provider.par.gz

@@ -1,0 +1,6 @@
+name = "Storage Provider"
+language = "rust"
+type = "provider"
+
+[provider]
+vendor = "vendor"

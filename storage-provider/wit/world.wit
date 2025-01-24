@@ -1,0 +1,10 @@
+package wasmcloud:example;
+
+interface fs-storage {
+    store: func(filename: string, data: list<u8>) -> result<_, string>;
+    load: func(filename: string) -> result<list<u8>, string>;
+}
+
+world provider {
+    export fs-storage;
+}

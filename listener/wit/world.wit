@@ -2,7 +2,7 @@ package wasmcloud:listener;
 
 world listener {
    import wasi:logging/logging@0.1.0-draft;
-   import wasi:blobstore/blobstore@0.2.0-draft;
+   import wasmcloud:example/fs-storage;
    
    export wasmcloud:messaging/handler@0.2.0;
 }
