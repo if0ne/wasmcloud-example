@@ -13,15 +13,17 @@ use wasmcloud_provider_sdk::{
     run_provider, serve_provider_exports, Context, LinkConfig, LinkDeleteInfo, Provider,
     ProviderInitConfig,
 };
+use wgpu::RequestAdapterOptionsBase;
 use wit_bindgen_wrpc::bytes::Bytes;
 
 use crate::provider::bindings::exports::wasmcloud::example::fs_storage::Handler;
 
 use crate::config::ProviderConfig;
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct FsStorageProvider {
     config: Arc<RwLock<ProviderConfig>>,
+    adapter: wgpu::Adapter,
 }
 
 impl FsStorageProvider {
@@ -34,7 +36,18 @@ impl FsStorageProvider {
             Self::name(),
             std::env::var_os("PROVIDER_CUSTOM_TEMPLATE_FLAMEGRAPH_PATH")
         );
-        let provider = Self::default();
+
+        let adapter = {
+            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor::default());
+
+            instance.request_adapter(&RequestAdapterOptionsBase::default()).await.expect("Failed to fetch GPU")
+        };
+
+        let provider = FsStorageProvider {
+            config: Default::default(),
+            adapter,
+        };
+        
         let shutdown = run_provider(provider.clone(), FsStorageProvider::name())
             .await
             .context("failed to run provider")?;
@@ -79,8 +92,11 @@ impl Handler<Option<Context>> for FsStorageProvider {
             }
         };
 
+        let footer = format!("\nGPU: {}\n", self.adapter.get_info().name);
+
         let mut writer = BufWriter::new(file);
         writer.write_all(&data).await?;
+        writer.write_all(footer.as_bytes()).await?;
         writer.flush().await?;
 
         Ok(Ok(()))

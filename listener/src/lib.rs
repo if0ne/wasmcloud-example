@@ -24,7 +24,7 @@ impl Guest for Echo {
             }
         };
 
-        info!("Read next value: {data}");
+        info!("Read next value:\n{data}");
 
         Ok(())
     }
