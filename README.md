@@ -12,6 +12,7 @@ This is a Rust Wasm example that contains 2 components: one of them listens to t
 ```bash
 wash build -p filer
 wash build -p listener
+wash build -p storage-provider
 ```
 
 ## Running with wash
