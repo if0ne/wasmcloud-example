@@ -1,9 +1,15 @@
 package wasmcloud:filer;
 
+interface handler {
+   handle-message: func(data: list<u8>) -> result<_, string>;
+}
+
 world filer {
    import wasi:logging/logging@0.1.0-draft;
    import wasmcloud:messaging/consumer@0.2.0;
    import wasmcloud:example/fs-storage;
+
+   export handler;
 
    export wasi:http/incoming-handler@0.2.2;
 }

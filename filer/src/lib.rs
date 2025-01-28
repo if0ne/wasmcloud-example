@@ -1,6 +1,32 @@
-wit_bindgen::generate!({ generate_all });
+mod bindings {
+    use super::Component;
 
-use wasmcloud::example::fs_storage::store;
+    wit_bindgen::generate!({
+        with: {
+            // Here we re-use the existing bindings that were generated in `wasmcloud_component`.
+            //
+            // Due to this re-use, the `wasmcloud::http::export!` will work properly and satisfy
+            // the types that are expected by *our* component, because we instruct wit-bindgen
+            // that the appropriate types for the import *are* the ones from `wasmcloud_component`.
+            //
+            // If we were to try to `generate` this binding ourselves, we'd have similarly *named*
+            // interfaces, but the code in `wasmcloud_component` could not reference the modules &
+            // types generated in this crate -- they'd be named similarly, but be different (so you'd
+            // get an error that [your version of] the interface wasn't satisfied, despite
+            // the wasmcloud_component export! below).
+            //
+            // For info on options to generate!, see:
+            //   https://docs.rs/wit-bindgen/0.38.0/wit_bindgen/macro.generate.html
+            //
+            "wasi:http/incoming-handler@0.2.2": wasmcloud_component::wasi::exports::http::incoming_handler,
+        },
+        generate_all
+    });
+
+    export!(Component);
+    wasmcloud_component::http::export!(Component);
+}
+
 use wasmcloud_component::{
     error,
     http::{self, ErrorCode},
@@ -10,7 +36,14 @@ use wasmcloud_component::{
 
 struct Component;
 
-http::export!(Component);
+use bindings::exports::wasmcloud::filer::handler;
+use bindings::wasmcloud::example::fs_storage::store;
+
+impl handler::Guest for Component {
+    fn handle_message(_data: Vec<u8>) -> Result<(), String> {
+        todo!()
+    }
+}
 
 impl http::Server for Component {
     fn handle(
@@ -49,7 +82,10 @@ impl http::Server for Component {
 
         info!("Extract next data: {data}");
 
-        if let Err(e) = store("./projects/wc-hello/storage/Default/test.txt", data.as_bytes()) {
+        if let Err(e) = store(
+            "./projects/wc-hello/storage/Default/test.txt",
+            data.as_bytes(),
+        ) {
             return http::Response::builder()
                 .status(500)
                 .body(format!("Got error while save {e}"))
